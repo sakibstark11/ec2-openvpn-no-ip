@@ -154,7 +154,7 @@ data "aws_ami_from_instance" "vpn_ami" {
 resource "aws_ec2_instance_state" "ami_builder_stop" {
   instance_id = aws_instance.ami_builder.id
   state       = "stopped"
-  depends_on  = [aws_ami_from_instance.vpn_ami]
+  depends_on  = [data.aws_ami_from_instance.vpn_ami]
 }
 
 # Use the created AMI to launch a new EC2 instance
