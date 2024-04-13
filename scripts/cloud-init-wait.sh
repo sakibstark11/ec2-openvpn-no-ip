@@ -1,6 +1,7 @@
 #!/bin/bash
 set -Ee -o pipefail
 export AWS_DEFAULT_REGION=${aws_region}
+sleep 60
 command_id=$(aws ssm send-command --document-name ${ssm_document_arn} --instance-ids ${instance_id} --output text --query "Command.CommandId")
 if ! aws ssm wait command-executed --command-id $command_id --instance-id ${instance_id}; then
   echo "Failed to complete user_data on instance ${instance_id}!";
