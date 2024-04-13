@@ -101,11 +101,6 @@ resource "aws_ssm_document" "cloud_init_wait" {
 }
 
 # Create an IAM role so that EC2 can talk to ssm
-resource "aws_iam_role" "ssm_role" {
-  name               = "${var.prefix}-ec2-ssm-role"
-  assume_role_policy = data.aws_iam_policy_document.ssm_assume_role.json
-}
-
 data "aws_iam_policy_document" "ssm_assume_role" {
   statement {
     actions = ["sts:AssumeRole"]
@@ -114,6 +109,11 @@ data "aws_iam_policy_document" "ssm_assume_role" {
       identifiers = ["ec2.amazonaws.com"]
     }
   }
+}
+
+resource "aws_iam_role" "ssm_role" {
+  name               = "${var.prefix}-ec2-ssm-role"
+  assume_role_policy = data.aws_iam_policy_document.ssm_assume_role.json
 }
 
 resource "aws_iam_role_policy_attachment" "ssm_role_policy_attachment" {
@@ -207,20 +207,4 @@ resource "aws_instance" "vpn" {
 resource "aws_ec2_instance_state" "vpn_running" {
   instance_id = aws_instance.vpn.id
   state       = "running"
-}
-
-resource "aws_iam_role" "ssm_role" {
-  name = "SSMRole"
-  assume_role_policy = jsonencode({
-    "Version" : "2012-10-17",
-    "Statement" : [
-      {
-        "Effect" : "Allow",
-        "Principal" : {
-          "Service" : "ec2.amazonaws.com"
-        },
-        "Action" : "sts:AssumeRole"
-      }
-    ]
-  })
 }
