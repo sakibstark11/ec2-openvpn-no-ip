@@ -100,6 +100,32 @@ resource "aws_ssm_document" "cloud_init_wait" {
   content         = file("scripts/cloud-init.yaml")
 }
 
+# Create an IAM role so that EC2 can talk to ssm
+resource "aws_iam_role" "ssm_role" {
+  name               = "${var.prefix}-ec2-ssm-role"
+  assume_role_policy = data.aws_iam_policy_document.ssm_assume_role.json
+}
+
+data "aws_iam_policy_document" "ssm_assume_role" {
+  statement {
+    actions = ["sts:AssumeRole"]
+    principals {
+      type        = "Service"
+      identifiers = ["ec2.amazonaws.com"]
+    }
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "ssm_role_policy_attachment" {
+  role       = aws_iam_role.ssm_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
+
+resource "aws_iam_instance_profile" "ssm_profile" {
+  name = "${var.prefix}-instance-profile"
+  role = aws_iam_role.ssm_role.name
+}
+
 # Launch an EC2 instance to build an ami
 resource "aws_instance" "ami_builder" {
   ami                         = "ami-06bd7f67e90613d1a"
@@ -109,6 +135,7 @@ resource "aws_instance" "ami_builder" {
   security_groups             = [aws_security_group.security_group.id]
   user_data                   = data.template_file.user_data.rendered
   user_data_replace_on_change = true
+  iam_instance_profile        = aws_iam_instance_profile.ssm_profile.name
   tags = {
     Name = "${var.prefix}-vpn-ec2-builder"
   }
@@ -180,4 +207,20 @@ resource "aws_instance" "vpn" {
 resource "aws_ec2_instance_state" "vpn_running" {
   instance_id = aws_instance.vpn.id
   state       = "running"
+}
+
+resource "aws_iam_role" "ssm_role" {
+  name = "SSMRole"
+  assume_role_policy = jsonencode({
+    "Version" : "2012-10-17",
+    "Statement" : [
+      {
+        "Effect" : "Allow",
+        "Principal" : {
+          "Service" : "ec2.amazonaws.com"
+        },
+        "Action" : "sts:AssumeRole"
+      }
+    ]
+  })
 }
