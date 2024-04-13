@@ -170,7 +170,7 @@ resource "aws_instance" "vpn" {
 }
 
 # Ensure the server is running on terraform deploy
-resource "aws_ec2_instance_state" "ami_builder_stop" {
+resource "aws_ec2_instance_state" "vpn_running" {
   instance_id = aws_instance.vpn.id
   state       = "running"
 }
