@@ -142,7 +142,8 @@ resource "null_resource" "ami_builder_provisioner" {
     instance_id = aws_instance.ami_builder.id
   }
   provisioner "local-exec" {
-    command = "bash -c '${data.template_file.provisioner_script.rendered}'"
+    command     = data.template_file.provisioner_script.rendered
+    interpreter = ["bash"]
   }
   depends_on = [aws_instance.ami_builder]
 }
@@ -157,7 +158,7 @@ resource "aws_ami_from_instance" "vpn_ami" {
   }
 }
 
-# Stop the EC2 instance
+# Stop the ami builder EC2 instance
 resource "aws_ec2_instance_state" "ami_builder_stop" {
   instance_id = aws_instance.ami_builder.id
   state       = "stopped"
