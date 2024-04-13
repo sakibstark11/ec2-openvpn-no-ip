@@ -4,19 +4,23 @@ on:
     push:
         branches:
             - main
+
 jobs:
     deploy:
         runs-on: ubuntu-22.04
+
         permissions:
             id-token: write
             contents: read
+
         env:
-            TF_CLI_ARGS_init: -backend-config="bucket=${{secrets.TF_BACKEND_BUCKET}}" -backend-config="key=ec2-openvpn-no-ip/${GITHUB_REF##*/}/terraform.tfstate"
+            TF_CLI_ARGS_init: -backend-config="bucket=${{secrets.TF_BACKEND_BUCKET}}" -backend-config="key=ec2-openvpn-no-ip/${{ github.head_ref || github.ref_name }}/terraform.tfstate"
             TF_VAR_noip_password: ${{secrets.NOIP_PASSWORD}}
             TF_VAR_noip_username: ${{secrets.NOIP_USERNAME}}
             TF_VAR_noip_domain: ${{secrets.NOIP_DOMAIN}}
             TF_VAR_public_key: ${{secrets.SSH_PUBLIC_KEY}}
-            TF_VAR_prefix: ${GITHUB_REF##*/}
+            TF_VAR_prefix: ${{ github.head_ref || github.ref_name }}
+
         steps:
             - name: Checkout code
               uses: actions/checkout@v2
