@@ -153,6 +153,12 @@ resource "aws_instance" "ami_builder" {
   }
 }
 
+# Stop the ami builder EC2 instance
+resource "aws_ec2_instance_state" "ami_builder_running" {
+  instance_id = aws_instance.ami_builder.id
+  state       = "running"
+}
+
 # Create a script to wait for the services to start
 data "template_file" "provisioner_script" {
   template = file("scripts/cloud-init-wait.sh")
@@ -171,7 +177,7 @@ resource "null_resource" "ami_builder_provisioner" {
     command     = data.template_file.provisioner_script.rendered
     interpreter = ["bash", "-c"]
   }
-  depends_on = [aws_instance.ami_builder]
+  depends_on = [aws_ec2_instance_state.ami_builder_running]
 }
 
 # Create an AMI from the EC2 instance
