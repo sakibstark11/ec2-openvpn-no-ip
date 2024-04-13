@@ -7,7 +7,7 @@ resource "aws_vpc" "vpc" {
 }
 
 # Create a new public subnet within the VPC
-resource "aws_subnet" "subnet" {
+resource "aws_subnet" "public" {
   vpc_id                  = aws_vpc.vpc.id
   cidr_block              = "10.0.1.0/24"
   map_public_ip_on_launch = true
@@ -22,6 +22,27 @@ resource "aws_internet_gateway" "igw" {
   tags = {
     Name = "${var.prefix}-vpn-igw"
   }
+}
+
+# Create a new route table for the public subnet
+resource "aws_route_table" "public" {
+  vpc_id = aws_vpc.vpc.id
+  tags = {
+    Name = "${var.prefix}-public-route-table"
+  }
+}
+
+# Create a new route to the Internet Gateway
+resource "aws_route" "public_internet_gateway" {
+  route_table_id         = aws_route_table.public.id
+  destination_cidr_block = "0.0.0.0/0"
+  gateway_id             = aws_internet_gateway.igw.id
+}
+
+# Associate the public route table with the public subnet
+resource "aws_route_table_association" "public" {
+  subnet_id      = aws_subnet.public.id
+  route_table_id = aws_route_table.public.id
 }
 
 # Create a new security group
@@ -67,7 +88,7 @@ data "template_file" "user_data" {
 resource "aws_instance" "instance" {
   ami             = "ami-004961349a19d7a8f"
   instance_type   = "t2.micro"
-  subnet_id       = aws_subnet.subnet.id
+  subnet_id       = aws_subnet.public.id
   key_name        = aws_key_pair.key_pair.key_name
   security_groups = [aws_security_group.security_group.name]
   user_data       = data.template_file.user_data.rendered
