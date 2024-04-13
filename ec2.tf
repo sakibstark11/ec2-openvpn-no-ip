@@ -24,12 +24,6 @@ resource "aws_internet_gateway" "igw" {
   }
 }
 
-# Attach the Internet Gateway to the VPC
-resource "aws_vpc_attachment" "igw_attachment" {
-  vpc_id              = aws_vpc.vpc.id
-  internet_gateway_id = aws_internet_gateway.igw.id
-}
-
 # Create a new security group
 resource "aws_security_group" "security_group" {
   vpc_id = aws_vpc.vpc.id
@@ -62,9 +56,10 @@ resource "aws_key_pair" "key_pair" {
 data "template_file" "user_data" {
   template = file("scripts/user-data.tpl")
   vars = {
-    noip_username = var.noip_username
-    noip_password = var.noip_password
-    noip_domain   = var.noip_domain
+    noip_username  = var.noip_username
+    noip_password  = var.noip_password
+    noip_domain    = var.noip_domain
+    openvpn_script = var.openvpn_script
   }
 }
 
