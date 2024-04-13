@@ -81,7 +81,7 @@ resource "aws_key_pair" "key_pair" {
 }
 
 data "template_file" "user_data" {
-  template = file("scripts/user-data.tpl")
+  template = file("scripts/user-data.sh")
   vars = {
     noip_username  = var.noip_username
     noip_password  = var.noip_password
