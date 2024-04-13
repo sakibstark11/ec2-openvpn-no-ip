@@ -152,6 +152,9 @@ resource "aws_ami_from_instance" "vpn_ami" {
   source_instance_id = aws_instance.ami_builder.id
   name               = "${var.prefix}-vpn-ami"
   depends_on         = [null_resource.ami_builder_provisioner]
+  tags = {
+    Name = "${var.prefix}-vpn-ami"
+  }
 }
 
 # Stop the EC2 instance
