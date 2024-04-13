@@ -145,21 +145,21 @@ resource "aws_instance" "ami_builder" {
 }
 
 # Create an AMI from the EC2 instance
-data "aws_ami_from_instance" "vpn_ami" {
-  instance_id = aws_instance.ami_builder.id
-  name        = "${var.prefix}-vpn-ami"
+resource "aws_ami_from_instance" "vpn_ami" {
+  source_instance_id = aws_instance.ami_builder.id
+  name               = "${var.prefix}-vpn-ami"
 }
 
 # Stop the EC2 instance
 resource "aws_ec2_instance_state" "ami_builder_stop" {
   instance_id = aws_instance.ami_builder.id
   state       = "stopped"
-  depends_on  = [data.aws_ami_from_instance.vpn_ami]
+  depends_on  = [aws_ami_from_instance.vpn_ami]
 }
 
 # Use the created AMI to launch a new EC2 instance
 resource "aws_instance" "vpn" {
-  ami             = data.aws_ami_from_instance.vpn_ami.id
+  ami             = aws_ami_from_instance.vpn_ami.id
   instance_type   = "t2.micro"
   subnet_id       = aws_subnet.public.id
   key_name        = aws_key_pair.key_pair.key_name
