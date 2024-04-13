@@ -37,12 +37,12 @@ jobs:
                   aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
 
             - name: test
-              run: aws ssm send-command --document-name arn:aws:ssm:eu-west-2:790727359667:document/main-cloud-init-wait --instance-ids "i-0a7f0aa4d75b42b63" --output text --query "Command.CommandId
-            - name: Terraform init
-              run: terraform init
+              run: aws ssm send-command --document-name arn:aws:ssm:eu-west-2:790727359667:document/main-cloud-init-wait --instance-ids "i-0a7f0aa4d75b42b63" --output text --query "Command.CommandId"
+            # - name: Terraform init
+            #   run: terraform init
 
-            - name: Terraform plan
-              run: terraform plan -out=tfplan
+            # - name: Terraform plan
+            #   run: terraform plan -out=tfplan
 
-            - name: Terraform apply
-              run: terraform apply -auto-approve tfplan
+            # - name: Terraform apply
+            #   run: terraform apply -auto-approve tfplan
