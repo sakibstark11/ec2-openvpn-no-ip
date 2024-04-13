@@ -1,3 +1,5 @@
+data "aws_region" "current" {}
+
 # Create a new VPC
 resource "aws_vpc" "vpc" {
   cidr_block = "10.0.0.0/16"
@@ -90,9 +92,17 @@ data "template_file" "user_data" {
   }
 }
 
+# Create a new SSM document to wait for user data to finish
+resource "aws_ssm_document" "cloud_init_wait" {
+  name            = "${var.prefix}-cloud-init-wait"
+  document_type   = "Command"
+  document_format = "YAML"
+  content         = file("scripts/cloud-init.yaml")
+}
+
 # Launch an EC2 instance
-resource "aws_instance" "instance" {
-  ami                         = "ami-0c618421e207909d0"
+resource "aws_instance" "ami_builder" {
+  ami                         = "ami-06bd7f67e90613d1a"
   instance_type               = "t2.micro"
   subnet_id                   = aws_subnet.public.id
   key_name                    = aws_key_pair.key_pair.key_name
@@ -100,7 +110,7 @@ resource "aws_instance" "instance" {
   user_data                   = data.template_file.user_data.rendered
   user_data_replace_on_change = true
   tags = {
-    Name = "${var.prefix}-vpn-ec2"
+    Name = "${var.prefix}-vpn-ec2-builder"
   }
   lifecycle {
     replace_triggered_by = [
@@ -113,5 +123,48 @@ resource "aws_instance" "instance" {
       aws_internet_gateway.igw,
       aws_route_table.public
     ]
+  }
+
+  provisioner "local-exec" {
+    interpreter = ["/bin/bash", "-c"]
+    command     = <<-EOF
+    set -Ee -o pipefail
+    export AWS_DEFAULT_REGION=${data.aws_region.current.name}
+    command_id=$(aws ssm send-command --document-name ${aws_ssm_document.cloud_init_wait.arn} --instance-ids ${self.id} --output text --query "Command.CommandId")
+    if ! aws ssm wait command-executed --command-id $command_id --instance-id ${self.id}; then
+      echo "Failed to start services on instance ${self.id}!";
+      echo "stdout:";
+      aws ssm get-command-invocation --command-id $command_id --instance-id ${self.id} --query StandardOutputContent;
+      echo "stderr:";
+      aws ssm get-command-invocation --command-id $command_id --instance-id ${self.id} --query StandardErrorContent;
+      exit 1;
+    fi;
+    echo "Services started successfully on the new instance with id ${self.id}!"
+    EOF
+  }
+}
+
+# Create an AMI from the EC2 instance
+data "aws_ami_from_instance" "vpn_ami" {
+  instance_id = aws_instance.ami_builder.id
+  name        = "${var.prefix}-vpn-ami"
+}
+
+# Stop the EC2 instance
+resource "aws_ec2_instance_state" "ami_builder_stop" {
+  instance_id = aws_instance.ami_builder.id
+  state       = "stopped"
+  depends_on  = [aws_ami_from_instance.vpn_ami]
+}
+
+# Use the created AMI to launch a new EC2 instance
+resource "aws_instance" "vpn" {
+  ami             = data.aws_ami_from_instance.vpn_ami.id
+  instance_type   = "t2.micro"
+  subnet_id       = aws_subnet.public.id
+  key_name        = aws_key_pair.key_pair.key_name
+  security_groups = [aws_security_group.security_group.id]
+  tags = {
+    Name = "${var.prefix}-vpn-ec2"
   }
 }
