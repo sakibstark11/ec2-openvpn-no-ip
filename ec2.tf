@@ -100,7 +100,7 @@ resource "aws_ssm_document" "cloud_init_wait" {
   content         = file("scripts/cloud-init.yaml")
 }
 
-# Launch an EC2 instance
+# Launch an EC2 instance to build an ami
 resource "aws_instance" "ami_builder" {
   ami                         = "ami-06bd7f67e90613d1a"
   instance_type               = "t2.micro"
@@ -124,24 +124,27 @@ resource "aws_instance" "ami_builder" {
       aws_route_table.public
     ]
   }
+}
 
-  provisioner "local-exec" {
-    interpreter = ["/bin/bash", "-c"]
-    command     = <<-EOF
-    set -Ee -o pipefail
-    export AWS_DEFAULT_REGION=${data.aws_region.current.name}
-    command_id=$(aws ssm send-command --document-name ${aws_ssm_document.cloud_init_wait.arn} --instance-ids ${self.id} --output text --query "Command.CommandId")
-    if ! aws ssm wait command-executed --command-id $command_id --instance-id ${self.id}; then
-      echo "Failed to start services on instance ${self.id}!";
-      echo "stdout:";
-      aws ssm get-command-invocation --command-id $command_id --instance-id ${self.id} --query StandardOutputContent;
-      echo "stderr:";
-      aws ssm get-command-invocation --command-id $command_id --instance-id ${self.id} --query StandardErrorContent;
-      exit 1;
-    fi;
-    echo "Services started successfully on the new instance with id ${self.id}!"
-    EOF
+# Create a script to wait for the services to start
+data "template_file" "provisioner_script" {
+  template = file("scripts/cloud-init-wait.sh")
+
+  vars = {
+    aws_region       = data.aws_region.current.name
+    ssm_document_arn = aws_ssm_document.cloud_init_wait.arn
+    instance_id      = aws_instance.ami_builder.id
   }
+}
+
+resource "null_resource" "ami_builder_provisioner" {
+  triggers = {
+    instance_id = aws_instance.ami_builder.id
+  }
+  provisioner "local-exec" {
+    command = data.template_file.provisioner_script.rendered
+  }
+  depends_on = [aws_instance.ami_builder]
 }
 
 # Create an AMI from the EC2 instance
