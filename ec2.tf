@@ -143,7 +143,7 @@ resource "null_resource" "ami_builder_provisioner" {
   }
   provisioner "local-exec" {
     command     = data.template_file.provisioner_script.rendered
-    interpreter = ["bash"]
+    interpreter = ["bash", "-c"]
   }
   depends_on = [aws_instance.ami_builder]
 }
