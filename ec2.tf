@@ -63,6 +63,12 @@ resource "aws_security_group" "security_group" {
     cidr_blocks = ["0.0.0.0/0"]
     description = "Allow VPN access"
   }
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
   tags = {
     Name = "${var.prefix}-vpn-sg"
   }
@@ -86,13 +92,26 @@ data "template_file" "user_data" {
 
 # Launch an EC2 instance
 resource "aws_instance" "instance" {
-  ami             = "ami-004961349a19d7a8f"
-  instance_type   = "t2.micro"
-  subnet_id       = aws_subnet.public.id
-  key_name        = aws_key_pair.key_pair.key_name
-  security_groups = [aws_security_group.security_group.id]
-  user_data       = data.template_file.user_data.rendered
+  ami                         = "ami-004961349a19d7a8f"
+  instance_type               = "t2.micro"
+  subnet_id                   = aws_subnet.public.id
+  key_name                    = aws_key_pair.key_pair.key_name
+  security_groups             = [aws_security_group.security_group.id]
+  user_data                   = data.template_file.user_data.rendered
+  user_data_replace_on_change = true
   tags = {
     Name = "${var.prefix}-vpn-ec2"
+  }
+  lifecycle {
+    replace_triggered_by = [
+      aws_vpc.vpc,
+      aws_subnet.public,
+      aws_security_group.security_group,
+      aws_route.public_internet_gateway,
+      aws_route_table_association.public,
+      aws_key_pair.key_pair,
+      aws_internet_gateway.igw,
+      aws_route_table.public
+    ]
   }
 }
