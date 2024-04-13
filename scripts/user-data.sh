@@ -9,7 +9,7 @@ yum install -y noip
 
 systemctl enable noip.service
 
-noip2 -C -u ${noip_username} -p ${noip_password}
+noip2 -C -u ${noip_username} -p ${noip_password} -U 1
 
 systemctl start noip.service
 
