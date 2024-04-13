@@ -1,0 +1,12 @@
+schemaVersion: '2.2'
+  description: Wait for cloud init to finish
+  mainSteps:
+  - action: aws:runShellScript
+    name: StopOnLinux
+    precondition:
+      StringEquals:
+      - platformType
+      - Linux
+    inputs:
+      runCommand:
+      - cloud-init status --wait
