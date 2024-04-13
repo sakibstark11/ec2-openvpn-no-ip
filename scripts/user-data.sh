@@ -7,7 +7,7 @@ dpkg -i amazon-ssm-agent.deb
 systemctl enable amazon-ssm-agent
 systemctl start amazon-ssm-agent
 
-apt install -y gcc wget curl tar
+apt install -y wget curl tar
 
 wget https://dmej8g5cpdyqd.cloudfront.net/downloads/noip-duc_3.0.0.tar.gz
 tar xf noip-duc_3.0.0.tar.gz

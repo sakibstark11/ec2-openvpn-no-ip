@@ -129,7 +129,6 @@ resource "aws_instance" "ami_builder" {
 # Create a script to wait for the services to start
 data "template_file" "provisioner_script" {
   template = file("scripts/cloud-init-wait.sh")
-
   vars = {
     aws_region       = data.aws_region.current.name
     ssm_document_arn = aws_ssm_document.cloud_init_wait.arn
