@@ -90,7 +90,7 @@ resource "aws_instance" "instance" {
   instance_type   = "t2.micro"
   subnet_id       = aws_subnet.public.id
   key_name        = aws_key_pair.key_pair.key_name
-  security_groups = [aws_security_group.security_group.name]
+  security_groups = [aws_security_group.security_group.id]
   user_data       = data.template_file.user_data.rendered
   tags = {
     Name = "${var.prefix}-vpn-ec2"
