@@ -92,7 +92,7 @@ data "template_file" "user_data" {
 
 # Launch an EC2 instance
 resource "aws_instance" "instance" {
-  ami                         = "ami-004961349a19d7a8f"
+  ami                         = "ami-0c618421e207909d0"
   instance_type               = "t2.micro"
   subnet_id                   = aws_subnet.public.id
   key_name                    = aws_key_pair.key_pair.key_name
