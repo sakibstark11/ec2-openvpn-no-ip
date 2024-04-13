@@ -142,7 +142,7 @@ resource "null_resource" "ami_builder_provisioner" {
     instance_id = aws_instance.ami_builder.id
   }
   provisioner "local-exec" {
-    command = data.template_file.provisioner_script.rendered
+    command = "bash -c '${data.template_file.provisioner_script.rendered}'"
   }
   depends_on = [aws_instance.ami_builder]
 }
