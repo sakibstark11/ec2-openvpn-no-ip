@@ -1,0 +1,39 @@
+name: Deploy Terraform
+
+on:
+    push:
+        branches:
+            - main
+jobs:
+    deploy:
+        runs-on: ubuntu-22.04
+        permissions:
+            id-token: write
+            contents: read
+        env:
+            TF_CLI_ARGS_init: -backend-config="bucket=${{secrets.TF_BACKEND_BUCKET}}" -backend-config="key=ec2-openvpn-no-ip/${GITHUB_REF##*/}/terraform.tfstate"
+            TF_VAR_noip_password: ${{secrets.NOIP_PASSWORD}}
+            TF_VAR_noip_username: ${{secrets.NOIP_USERNAME}}
+            TF_VAR_noip_domain: ${{secrets.NOIP_DOMAIN}}
+            TF_VAR_public_key: ${{secrets.SSH_PUBLIC_KEY}}
+            TF_VAR_prefix: ${GITHUB_REF##*/}
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v2
+
+            - name: Set up Terraform
+              uses: hashicorp/setup-terraform@v1
+              with:
+                  terraform_version: 1.7.0
+
+            - name: Configure AWS credentials
+              uses: aws-actions/configure-aws-credentials@v3
+              with:
+                  role-to-assume: ${{ secrets.ACTION_ASSUME_ROLE }}
+                  aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
+
+            - name: Terraform init
+              run: terraform init
+
+            - name: Terraform plan
+              run: terraform plan -out=tfplan
