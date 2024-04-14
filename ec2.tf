@@ -166,7 +166,6 @@ resource "null_resource" "ami_builder_provisioner" {
     )
     interpreter = ["bash", "-c"]
   }
-  depends_on = [aws_ec2_instance_state.ami_builder_running]
 }
 
 # Create an AMI from the EC2 instance
