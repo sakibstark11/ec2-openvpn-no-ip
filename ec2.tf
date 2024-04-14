@@ -119,7 +119,7 @@ resource "aws_iam_instance_profile" "ssm_profile" {
 # Launch an EC2 instance to build an ami
 resource "aws_instance" "ami_builder" {
   ami                    = "ami-06bd7f67e90613d1a" # debian
-  instance_type          = "t2.micro"
+  instance_type          = var.instance_type
   subnet_id              = aws_subnet.public.id
   key_name               = aws_key_pair.key_pair.key_name
   vpc_security_group_ids = [aws_security_group.security_group.id]
@@ -185,20 +185,48 @@ resource "aws_ec2_instance_state" "ami_builder_stop" {
   depends_on  = [aws_ami_from_instance.vpn_ami]
 }
 
-# Use the created AMI to launch a new EC2 instance
-resource "aws_instance" "vpn" {
-  ami                    = aws_ami_from_instance.vpn_ami.id
-  instance_type          = "t2.micro"
-  subnet_id              = aws_subnet.public.id
-  key_name               = aws_key_pair.key_pair.key_name
-  vpc_security_group_ids = [aws_security_group.security_group.id]
-  tags = {
-    Name = "${var.prefix}-vpn-ec2"
+# Get the current spot price for the instance type
+data "aws_ec2_spot_price" "current" {
+  instance_type     = var.instance_type
+  availability_zone = aws_subnet.public.availability_zone
+
+  filter {
+    name   = "product-description"
+    values = ["Linux/UNIX"]
   }
 }
 
-# Ensure the server is running on terraform deploy
-resource "aws_ec2_instance_state" "vpn_running" {
-  instance_id = aws_instance.vpn.id
-  state       = "running"
+# Create a launch template for the VPN instances
+resource "aws_launch_template" "vpn" {
+  name_prefix            = "${var.prefix}-vpn-template"
+  image_id               = aws_ami_from_instance.vpn_ami.id
+  instance_type          = var.instance_type
+  vpc_security_group_ids = [aws_security_group.security_group.id]
+  # Spot Instance configuration
+  instance_market_options {
+    market_type = "spot"
+    spot_options {
+      max_price = data.aws_ec2_spot_price.current.spot_price + data.aws_ec2_spot_price.current.spot_price * var.spot_instance_above_market_percentage / 100
+    }
+  }
+}
+
+# Create an Auto Scaling Group for VPN instances
+resource "aws_autoscaling_group" "vpn_asg" {
+  name = "${var.prefix}-vpn-asg"
+  launch_template {
+    id      = aws_launch_template.vpn.id
+    version = "$Latest"
+  }
+  min_size            = 1
+  max_size            = 1
+  desired_capacity    = 1
+  vpc_zone_identifier = [aws_subnet.public.id]
+  health_check_type   = "EC2"
+
+  tag {
+    key                 = "Name"
+    value               = "${var.prefix}-vpn-ec2"
+    propagate_at_launch = true
+  }
 }
