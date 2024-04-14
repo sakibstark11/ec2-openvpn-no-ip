@@ -118,11 +118,11 @@ resource "aws_iam_instance_profile" "ssm_profile" {
 
 # Launch an EC2 instance to build an ami
 resource "aws_instance" "ami_builder" {
-  ami             = "ami-06bd7f67e90613d1a"
-  instance_type   = "t2.micro"
-  subnet_id       = aws_subnet.public.id
-  key_name        = aws_key_pair.key_pair.key_name
-  security_groups = [aws_security_group.security_group.id]
+  ami                    = "ami-06bd7f67e90613d1a" # debian
+  instance_type          = "t2.micro"
+  subnet_id              = aws_subnet.public.id
+  key_name               = aws_key_pair.key_pair.key_name
+  vpc_security_group_ids = [aws_security_group.security_group.id]
   user_data = templatefile("scripts/user-data.sh",
     {
       noip_username  = var.noip_username
@@ -187,11 +187,11 @@ resource "aws_ec2_instance_state" "ami_builder_stop" {
 
 # Use the created AMI to launch a new EC2 instance
 resource "aws_instance" "vpn" {
-  ami             = aws_ami_from_instance.vpn_ami.id
-  instance_type   = "t2.micro"
-  subnet_id       = aws_subnet.public.id
-  key_name        = aws_key_pair.key_pair.key_name
-  security_groups = [aws_security_group.security_group.id]
+  ami                    = aws_ami_from_instance.vpn_ami.id
+  instance_type          = "t2.micro"
+  subnet_id              = aws_subnet.public.id
+  key_name               = aws_key_pair.key_pair.key_name
+  vpc_security_group_ids = [aws_security_group.security_group.id]
   tags = {
     Name = "${var.prefix}-vpn-ec2"
   }
