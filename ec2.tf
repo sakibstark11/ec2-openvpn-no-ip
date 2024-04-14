@@ -82,16 +82,6 @@ resource "aws_key_pair" "key_pair" {
   public_key = var.public_key
 }
 
-data "template_file" "user_data" {
-  template = file("scripts/user-data.sh")
-  vars = {
-    noip_username  = var.noip_username
-    noip_password  = var.noip_password
-    noip_domain    = var.noip_domain
-    openvpn_script = var.openvpn_script
-  }
-}
-
 # Create a new SSM document to wait for user data to finish
 resource "aws_ssm_document" "cloud_init_wait" {
   name            = "${var.prefix}-cloud-init-wait"
@@ -128,12 +118,19 @@ resource "aws_iam_instance_profile" "ssm_profile" {
 
 # Launch an EC2 instance to build an ami
 resource "aws_instance" "ami_builder" {
-  ami                         = "ami-06bd7f67e90613d1a"
-  instance_type               = "t2.micro"
-  subnet_id                   = aws_subnet.public.id
-  key_name                    = aws_key_pair.key_pair.key_name
-  security_groups             = [aws_security_group.security_group.id]
-  user_data                   = data.template_file.user_data.rendered
+  ami             = "ami-06bd7f67e90613d1a"
+  instance_type   = "t2.micro"
+  subnet_id       = aws_subnet.public.id
+  key_name        = aws_key_pair.key_pair.key_name
+  security_groups = [aws_security_group.security_group.id]
+  user_data = templatefile("scripts/user-data.sh",
+    {
+      noip_username  = var.noip_username
+      noip_password  = var.noip_password
+      noip_domain    = var.noip_domain
+      openvpn_script = var.openvpn_script
+    }
+  )
   user_data_replace_on_change = true
   iam_instance_profile        = aws_iam_instance_profile.ssm_profile.name
   tags = {
@@ -153,28 +150,20 @@ resource "aws_instance" "ami_builder" {
   }
 }
 
-# Stop the ami builder EC2 instance
-resource "aws_ec2_instance_state" "ami_builder_running" {
-  instance_id = aws_instance.ami_builder.id
-  state       = "running"
-}
-
 # Create a script to wait for the services to start
-data "template_file" "provisioner_script" {
-  template = file("scripts/cloud-init-wait.sh")
-  vars = {
-    aws_region       = data.aws_region.current.name
-    ssm_document_arn = aws_ssm_document.cloud_init_wait.arn
-    instance_id      = aws_instance.ami_builder.id
-  }
-}
-
 resource "null_resource" "ami_builder_provisioner" {
   triggers = {
     instance_id = aws_instance.ami_builder.id
   }
   provisioner "local-exec" {
-    command     = data.template_file.provisioner_script.rendered
+    command = templatefile(
+      "scripts/cloud-init-wait.sh",
+      {
+        aws_region       = data.aws_region.current.name
+        ssm_document_arn = aws_ssm_document.cloud_init_wait.arn
+        instance_id      = aws_instance.ami_builder.id
+      }
+    )
     interpreter = ["bash", "-c"]
   }
   depends_on = [aws_ec2_instance_state.ami_builder_running]
