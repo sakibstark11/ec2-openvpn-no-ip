@@ -198,7 +198,7 @@ data "aws_ec2_spot_price" "current" {
 
 # Create a launch template for the VPN instances
 resource "aws_launch_template" "vpn" {
-  name_prefix            = "${var.prefix}-vpn-template"
+  name_prefix            = "${var.prefix}-vpn-template-"
   image_id               = aws_ami_from_instance.vpn_ami.id
   instance_type          = var.instance_type
   vpc_security_group_ids = [aws_security_group.security_group.id]
