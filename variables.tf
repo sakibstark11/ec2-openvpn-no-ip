@@ -32,12 +32,6 @@ variable "openvpn_script" {
   default     = "https://raw.githubusercontent.com/angristan/openvpn-install/master/openvpn-install.sh"
 }
 
-variable "spot_instance_above_market_percentage" {
-  type        = number
-  description = "the above market price value in percentage you're willing to go"
-  default     = 3
-}
-
 variable "instance_type" {
   type        = string
   description = "type of instance you want to run"

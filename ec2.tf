@@ -185,30 +185,12 @@ resource "aws_ec2_instance_state" "ami_builder_stop" {
   depends_on  = [aws_ami_from_instance.vpn_ami]
 }
 
-# Get the current spot price for the instance type
-data "aws_ec2_spot_price" "current" {
-  instance_type     = var.instance_type
-  availability_zone = aws_subnet.public.availability_zone
-
-  filter {
-    name   = "product-description"
-    values = ["Linux/UNIX"]
-  }
-}
-
 # Create a launch template for the VPN instances
 resource "aws_launch_template" "vpn" {
   name_prefix            = "${var.prefix}-vpn-template-"
   image_id               = aws_ami_from_instance.vpn_ami.id
   instance_type          = var.instance_type
   vpc_security_group_ids = [aws_security_group.security_group.id]
-  # Spot Instance configuration
-  instance_market_options {
-    market_type = "spot"
-    spot_options {
-      max_price = data.aws_ec2_spot_price.current.spot_price + data.aws_ec2_spot_price.current.spot_price * var.spot_instance_above_market_percentage / 100
-    }
-  }
 }
 
 # Create an Auto Scaling Group for VPN instances
