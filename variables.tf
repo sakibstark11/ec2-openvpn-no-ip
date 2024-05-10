@@ -35,7 +35,7 @@ variable "openvpn_script" {
 variable "spot_instance_above_market_percentage" {
   type        = number
   description = "the above market price value in percentage you're willing to go"
-  default     = 2
+  default     = 3
 }
 
 variable "instance_type" {
