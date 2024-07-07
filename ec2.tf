@@ -220,7 +220,7 @@ resource "aws_autoscaling_schedule" "scale_in_evening" {
   max_size               = 0
   desired_capacity       = 0
   autoscaling_group_name = aws_autoscaling_group.vpn_asg.name
-  recurrence             = "0 19 * * *"
+  recurrence             = "0 19 ? * ? *"
   time_zone              = "Europe/London"
 }
 
