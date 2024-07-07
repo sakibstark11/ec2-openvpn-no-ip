@@ -220,7 +220,7 @@ resource "aws_autoscaling_schedule" "scale_in_evening" {
   max_size               = 0
   desired_capacity       = 0
   autoscaling_group_name = aws_autoscaling_group.vpn_asg.name
-  recurrence             = "00 19 * *"
+  recurrence             = "00 19 * * *"
   time_zone              = "Europe/London"
 }
 
@@ -230,7 +230,7 @@ resource "aws_autoscaling_schedule" "scale_out_month_end_morning" {
   max_size               = 1
   desired_capacity       = 1
   autoscaling_group_name = aws_autoscaling_group.vpn_asg.name
-  recurrence             = "00 02 L * *"
+  recurrence             = "00 02 L * ?"
   time_zone              = "Europe/London"
 }
 
@@ -240,6 +240,6 @@ resource "aws_autoscaling_schedule" "scale_in_month_end_morning" {
   max_size               = 0
   desired_capacity       = 0
   autoscaling_group_name = aws_autoscaling_group.vpn_asg.name
-  recurrence             = "05 02 L * *"
+  recurrence             = "05 02 L * ?"
   time_zone              = "Europe/London"
 }
