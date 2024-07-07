@@ -35,5 +35,5 @@ variable "openvpn_script" {
 variable "instance_type" {
   type        = string
   description = "type of instance you want to run"
-  default     = "t4g.micro"
+  default     = "t2.micro"
 }
