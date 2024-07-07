@@ -118,7 +118,7 @@ resource "aws_iam_instance_profile" "ssm_profile" {
 
 # Launch an EC2 instance to build an ami
 resource "aws_instance" "ami_builder" {
-  ami                    = "ami-0fcb42819bdb48f8f" # debian
+  ami                    = "ami-000765b8db93c1dbe" # debian 12
   instance_type          = var.instance_type
   subnet_id              = aws_subnet.public.id
   key_name               = aws_key_pair.key_pair.key_name
