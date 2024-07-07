@@ -212,3 +212,34 @@ resource "aws_autoscaling_group" "vpn_asg" {
     propagate_at_launch = true
   }
 }
+
+# auto scaling
+resource "aws_autoscaling_schedule" "scale_in_evening" {
+  scheduled_action_name  = "${var.prefix}-scale-in-evening"
+  min_size               = 0
+  max_size               = 0
+  desired_capacity       = 0
+  autoscaling_group_name = aws_autoscaling_group.vpn_asg.name
+  recurrence             = "0 19 * * *"
+  time_zone              = "Europe/London"
+}
+
+resource "aws_autoscaling_schedule" "scale_out_month_end_morning" {
+  scheduled_action_name  = "${var.prefix}-scale-out-month-end-morning"
+  min_size               = 1
+  max_size               = 1
+  desired_capacity       = 1
+  autoscaling_group_name = aws_autoscaling_group.vpn_asg.name
+  recurrence             = "0 2 L * ? *"
+  time_zone              = "Europe/London"
+}
+
+resource "aws_autoscaling_schedule" "scale_in_month_end_morning" {
+  scheduled_action_name  = "${var.prefix}-scale-in-month-end-morning"
+  min_size               = 0
+  max_size               = 0
+  desired_capacity       = 0
+  autoscaling_group_name = aws_autoscaling_group.vpn_asg.name
+  recurrence             = "5 2 L * ? *"
+  time_zone              = "Europe/London"
+}
