@@ -35,5 +35,5 @@ variable "openvpn_script" {
 variable "instance_type" {
   type        = string
   description = "type of instance you want to run"
-  default     = "t2.nano"
+  default     = "t4g.nano"
 }
