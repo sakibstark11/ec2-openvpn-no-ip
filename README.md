@@ -1,10 +1,19 @@
 # ec2-openvpn-no-ip
+Terraform to deploy my personal openvpn server into aws. Creates an ami image to then run off of that ami.
 
-Terraform to deploy my personal openvpn server into aws
+# config
+| Variable Name        | Description                                                                 |
+|----------------------|-----------------------------------------------------------------------------|
+| ACTION_ASSUME_ROLE   | The role to assume in AWS, typically used for gaining specific permissions. |
+| AWS_DEFAULT_REGION   | The default region to be used for AWS services.                             |
+| NOIP_DOMAIN          | The domain name used with the No-IP dynamic DNS service.                    |
+| NOIP_PASSWORD        | The password for the No-IP account.                                         |
+| NOIP_USERNAME        | The username for the No-IP account.                                         |
+| SSH_PUBLIC_KEY       | The public SSH key used for secure access.                                  |
+| TF_BACKEND_BUCKET    | The S3 bucket used for storing Terraform state files.                       |
 
-Creates an ami image to then run off of that ami.
+# rules
+- ASG scales down automatically at 7PM.
 
-## Todo
-
--   Use custom certs and signing keys so that I can deploy the same server over and over again and still have all my clients function.
--   ASG should have auto scale in policy based on time of the day, like from 9PM, it should automatically scale in as i won't be using it after 8PM.
+# todo
+- The autoscaling rule that scales down the asg could perhaps monitor the traffic in the ec2 instance and only scales down if the traffic has been low for a number of hours.
