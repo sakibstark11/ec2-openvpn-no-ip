@@ -1,5 +1,5 @@
 # ec2-openvpn-no-ip
-Terraform to deploy my personal openvpn server into aws. Creates an ami image to then run off of that ami.
+Terraform to deploy my personal openvpn server into aws. Uses NO-IP ddns to ensure that the client can find the ec2 instance public ip. Creates an ami image to then run off of that ami.
 
 # config
 | Variable Name        | Description                                                                 |
