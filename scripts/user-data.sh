@@ -2,6 +2,8 @@
 
 set -e
 
+sudo apt update
+
 wget https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/debian_arm64/amazon-ssm-agent.deb
 dpkg -i amazon-ssm-agent.deb
 systemctl daemon-reload
